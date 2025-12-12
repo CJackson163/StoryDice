@@ -85,15 +85,15 @@ def generate_story(character=None, adjective=None, tone=None, role=None):
 def print_story_result(result):
     """Pretty print the story result"""
     if "error" in result:
-        print(f"❌ ERROR: {result['error']}")
+        print(f" ERROR: {result['error']}")
         return
     
     print("=" * 60)
-    print("📝 VARIABLES USED:")
+    print(" VARIABLES USED:")
     for key, value in result['variables_used'].items():
         if value:
             print(f"   {key.capitalize()}: {value}")
-    print("\n📖 GENERATED STORY:")
+    print("\n GENERATED STORY:")
     print(f"   {result['story']}")
     print("=" * 60)
     print()
