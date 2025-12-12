@@ -1,0 +1,99 @@
+import requests
+import json
+
+
+LM_STUDIO_URL = "http://127.0.0.1:1234"
+
+
+CHARACTERS = ["Car", "Alien", "Astronaut", "Dinosaur", "Scientist", "Dog"]
+ADJECTIVES = ["Magical", "Smart", "Brave", "Friendly", "Curious", "Giant"]
+TONES = ["Silly", "Happy", "Mysterious", "Boring", "Educational", "Surprising"]
+ROLES = ["Toddler", "Teacher", "Scientist", "Robot", "News Reporter", "Grandmother"]
+
+def generate_story(character=None, adjective=None, tone=None, role=None):
+    """
+    Generate a story using 1-4 variables.
+    Leave parameters as None if you don't want to use them.
+    """
+    
+    prompt_parts = []
+    
+    if role:
+        prompt_parts.append(f"You are a {role} telling a story.")
+    else:
+        prompt_parts.append("You are telling a story.")
+    
+    story_request = "Write in exactly 3-4 sentences for children aged 7-10"
+    
+    if character and adjective:
+        story_request += f" about a {adjective} {character}."
+    elif character:
+        story_request += f" about a {character}."
+    elif adjective:
+        story_request += f" about an {adjective} character."
+    else:
+        story_request += "."
+    
+    prompt_parts.append(story_request)
+    
+    if tone:
+        prompt_parts.append(f"Your story MUST be {tone} - make sure the {tone} feeling is very clear and obvious.")
+    
+    # Add personality instruction if role is provided
+    if role:
+        prompt_parts.append(f"Use simple words and make your {role} personality shine through in how you tell the story.")
+    else:
+        prompt_parts.append("Use simple words.")
+    
+    prompt_parts.append("Make this story completely different from any other story about this character.")
+    
+
+    full_prompt = " ".join(prompt_parts)
+    
+    payload = {
+        "model": "local-model",  # LM Studio uses whatever model is loaded
+        "messages": [
+            {"role": "user", "content": full_prompt}
+        ],
+        "temperature": 0.7,
+        "max_tokens": 200
+    }
+    
+    try:
+        # Send request to LM Studio
+        response = requests.post(LM_STUDIO_URL, json=payload)
+        response.raise_for_status()
+        
+        # Extract the story from the response
+        result = response.json()
+        story = result['choices'][0]['message']['content']
+        
+        return {
+            "prompt": full_prompt,
+            "story": story,
+            "variables_used": {
+                "character": character,
+                "adjective": adjective,
+                "tone": tone,
+                "role": role
+            }
+        }
+    
+    except requests.exceptions.RequestException as e:
+        return {"error": f"Failed to connect to LM Studio: {str(e)}"}
+
+def print_story_result(result):
+    """Pretty print the story result"""
+    if "error" in result:
+        print(f"❌ ERROR: {result['error']}")
+        return
+    
+    print("=" * 60)
+    print("📝 VARIABLES USED:")
+    for key, value in result['variables_used'].items():
+        if value:
+            print(f"   {key.capitalize()}: {value}")
+    print("\n📖 GENERATED STORY:")
+    print(f"   {result['story']}")
+    print("=" * 60)
+    print()
